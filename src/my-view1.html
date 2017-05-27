@@ -11,6 +11,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
 <link rel="import" href="../../bower_components/paper-input/paper-input.html">
 <link rel="import" href="../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../bower_components/polymerfire/firebase-app.html">
+<link rel="import" href="../../bower_components/polymerfire/firebase-document.html">
+<link rel="import" href="../../bower_components/simple-promotional/simple-promotional.html">
 <link rel="import" href="shared-styles.html">
 
 <dom-module id="my-view1">
@@ -23,23 +26,40 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
     </style>
 
-    <!--<firebase-document
-      location="https://banners-18980.firebaseio.com/images"
-      data="{{images}}"></firebase-document>-->
+    <firebase-app
+      name="simple-promotional"
+      auth-domain="simple-promotional.firebaseapp.com"
+      database-url="https://simple-promotional.firebaseio.com"
+      api-key="AIzaSyCSXARyIQ_7hJPhWPoqThRKVns1KGzaIuA">
+    </firebase-app>
+
+    <firebase-document
+      app-name="simple-promotional"
+      path="/contentData"
+      data="{{data}}"></firebase-document>
 
     <div class="card">
-      <paper-input label="Image link URL" value="{{images.image1.value}}"></paper-input>
-      <paper-input label="Image Headline Emphasized Text" value="{{images.image1.linkUrlEn}}"></paper-input>
-      <paper-input label="Image Headline Subtext" value="{{images.image1.text}}"></paper-input>
-      <paper-input label="Primary Button Label" value="{{images.image1.altTextEn}}"></paper-input>
+      <paper-input label="Image Headline Subtext" value="{{data.image1.text}}"></paper-input>
       <paper-button raised on-tap="submit" name="submit" id="submit">Save</paper-button>
+    </div>
+    <div class="card">
+      <simple-promotional></simple-promotional>
     </div>
   </template>
 
     <script>
+
         class MyView1 extends Polymer.Element {
             static get is() {
                 return 'my-view1';
+            }
+
+            static get observers() {
+              return ["imagesChanged(images)"];
+            }
+
+            imagesChanged(d) {
+              console.log(d);
             }
         }
 
