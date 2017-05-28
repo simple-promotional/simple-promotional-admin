@@ -9,11 +9,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 -->
 
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
-<link rel="import" href="../../bower_components/paper-input/paper-input.html">
-<link rel="import" href="../../bower_components/paper-button/paper-button.html">
-<link rel="import" href="../../bower_components/polymerfire/firebase-app.html">
-<link rel="import" href="../../bower_components/polymerfire/firebase-document.html">
-<link rel="import" href="../../bower_components/simple-promotional/simple-promotional.html">
+<link rel="import" href="../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/polymerfire/firebase-app.html">
+<link rel="import" href="../bower_components/polymerfire/firebase-query.html">
+<link rel="import" href="../bower_components/simple-promotional/simple-promotional.html">
+<link rel="import" href="../bower_components/iron-form/iron-form.html">
 <link rel="import" href="shared-styles.html">
 
 <dom-module id="my-view1">
@@ -28,38 +29,64 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
     <firebase-app
       name="simple-promotional"
+      app={{app}}
       auth-domain="simple-promotional.firebaseapp.com"
       database-url="https://simple-promotional.firebaseio.com"
       api-key="AIzaSyCSXARyIQ_7hJPhWPoqThRKVns1KGzaIuA">
     </firebase-app>
 
-    <firebase-document
-      app-name="simple-promotional"
-      path="/contentData"
-      data="{{data}}"></firebase-document>
-
     <div class="card">
-      <paper-input label="Image Headline Subtext" value="{{data.image1.text}}"></paper-input>
-      <paper-button raised on-tap="submit" name="submit" id="submit">Save</paper-button>
+      <iron-form id="content">
+        <form method="get" action="/">
+        <paper-input name="headlineText" label="Image Headline Subtext" value="{{data.image1.text}}"></paper-input>
+        <paper-button raised on-tap="submitContentForm">Save</paper-button>
+        </form>
+      </iron-form>
     </div>
-    <div class="card">
-      <simple-promotional></simple-promotional>
+    <div id="promoCard" class="card">
+      <simple-promotional id="banner"></simple-promotional>
     </div>
   </template>
 
     <script>
-
         class MyView1 extends Polymer.Element {
             static get is() {
                 return 'my-view1';
             }
 
-            static get observers() {
-              return ["imagesChanged(images)"];
+            static get properties() {
+              return {
+                data: {
+                  type: Object
+                }
+              }
             }
 
-            imagesChanged(d) {
-              console.log(d);
+            connectedCallback() {
+                super.connectedCallback();
+
+                Polymer.RenderStatus.afterNextRender(this, () => {
+                    this.$.content.addEventListener('iron-form-submit', e => this._onSubmitHandler(e));
+
+                    this.app.database().ref('contentData').once('value', (snapshot) => {
+                      this.data = snapshot.val();
+                    });
+                });
+            }
+
+            submitContentForm(event) {
+                this.$.content.submit();
+            }
+
+            _onSubmitHandler(e) {
+                this.app.database().ref('contentData/image1').set({
+                    text: e.detail.headlineText
+                }).then(() => {
+                  let preview = this.$.promoCard;
+                  preview.removeChild(this.shadowRoot.querySelector("simple-promotional"));
+                  let newBanner = new SimplePromotional();
+                  preview.appendChild(newBanner);
+                });
             }
         }
 
